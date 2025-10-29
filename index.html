@@ -96,14 +96,63 @@
             font-size: 0.95rem;
             margin-top: 15px;
         }
-        
-        /* 카테고리 아코디언 */
-        .category-accordion {
+
+        /* --- [수정됨] 마스터 아코디언 (전체 카테고리 접기) --- */
+        .master-accordion {
             background: white;
             border-radius: 20px;
-            padding: 20px;
             margin-bottom: 30px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden; 
+        }
+        
+        .master-accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            background: #f8f9ff;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 1px solid #eee; /* 닫혔을 때 구분선 */
+        }
+        
+        .master-accordion-header:hover {
+            background: #f0f2f9;
+        }
+        
+        .master-accordion-header.active {
+              border-bottom: 1px solid #ddd; /* 열렸을 때 구분선 */
+        }
+        
+        .master-accordion-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .master-accordion-icon {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .master-accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .master-accordion-content.active {
+            max-height: 5000px; /* 마스터는 크게 열려야 함 */
+        }
+        
+        /* --- [수정됨] 기존 카테고리 아코디언 스타일 조정 --- */
+        .category-accordion {
+            padding: 20px;
+            /* background, border-radius, margin-bottom, box-shadow 속성 제거 */
+            /* -> .master-accordion이 담당 */
         }
         
         .accordion-header {
@@ -143,23 +192,26 @@
             font-size: 0.9rem;
         }
         
+        /* --- [수정됨] 아코디언 아이콘 --- */
         .accordion-icon {
             font-size: 1.5rem;
             transition: transform 0.3s;
+            font-weight: bold;
         }
         
-        .accordion-header.active .accordion-icon {
-            transform: rotate(180deg);
-        }
+        /* .accordion-header.active .accordion-icon (CSS 회전 제거) */
         
         .accordion-content {
             max-height: 0;
             overflow: hidden;
+            overflow-y: auto; /* --- [수정됨] 미리 추가 --- */
             transition: max-height 0.3s ease-out;
         }
         
+        /* --- [수정됨] 카테고리 영역 크기 조절 --- */
         .accordion-content.active {
-            max-height: 5000px;
+            max-height: 300px; /* 5000px -> 300px로 변경 */
+            overflow-y: auto; /* 스크롤 추가 */
         }
         
         .sub-category-filters {
@@ -272,15 +324,15 @@
             flex: 1;
         }
         
+        /* --- [수정됨] 질문 아이콘 --- */
         .question-icon {
             font-size: 1.5rem;
             color: #667eea;
             transition: transform 0.3s;
+            font-weight: bold;
         }
         
-        .faq-item.active .question-icon {
-            transform: rotate(180deg);
-        }
+        /* .faq-item.active .question-icon (CSS 회전 제거) */
         
         .faq-answer {
             max-height: 0;
@@ -307,10 +359,7 @@
             color: #999;
         }
         
-        .no-results-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-        }
+        /* --- [삭제됨] .no-results-icon (이모지 제거) --- */
         
         /* 다운로드 버튼 */
         .download-section {
@@ -378,14 +427,12 @@
 </head>
 <body>
     <div class="container">
-        <!-- 헤더 -->
         <div class="header">
-            <h1>🚗 U+커넥트 통합 FAQ</h1>
+            <h1>U+커넥트 통합 FAQ</h1>
             <p>대리점용 종합 가이드</p>
-            <div class="last-updated">📅 최종 업데이트: 2025. 10. 29. 오전 10:18:57</div>
+            <div class="last-updated">최종 업데이트: 2025. 10. 29. 오후 6:13:33</div>
         </div>
         
-        <!-- 검색 박스 -->
         <div class="search-box">
             <div class="search-input-wrapper">
                 <input 
@@ -397,23 +444,28 @@
                 <span class="search-icon">🔍</span>
             </div>
             
-            <!-- 통계 -->
             <div class="stats">
                 총 <strong id="totalCount">0</strong>개 | 
                 표시 중 <strong id="displayCount">0</strong>개
             </div>
         </div>
         
-        <!-- 카테고리 아코디언 -->
-        <div class="category-accordion" id="categoryAccordion"></div>
+        <div class="master-accordion">
+            <div class="master-accordion-header" onclick="toggleMasterAccordion(this)">
+                <h2 class="master-accordion-title">카테고리별로 보기</h2>
+                <span class="master-accordion-icon">+</span>
+            </div>
+            <div class="master-accordion-content">
+                <div class="category-accordion" id="categoryAccordion">
+                    </div>
+            </div>
+        </div>
         
-        <!-- FAQ 리스트 -->
         <div class="faq-list" id="faqList"></div>
         
-        <!-- CSV 다운로드 -->
         <div class="download-section">
             <button class="download-btn" onclick="downloadCSV()">
-                📥 CSV 다운로드
+                CSV 다운로드
             </button>
         </div>
     </div>
@@ -464,13 +516,14 @@
                 const accordionItem = document.createElement('div');
                 accordionItem.className = 'accordion-item';
                 
+                // --- [수정됨] 아이콘 + 로 변경 ---
                 accordionItem.innerHTML = `
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <div class="accordion-title">
                             <span>${mainCat}</span>
                             <span class="accordion-count">${itemsInCategory.length}개</span>
                         </div>
-                        <span class="accordion-icon">▼</span>
+                        <span class="accordion-icon">+</span>
                     </div>
                     <div class="accordion-content">
                         <div class="sub-category-filters">
@@ -489,21 +542,41 @@
             });
         }
         
-        // 아코디언 토글
+        // --- [추가됨] 마스터 아코디언 토글 ---
+        function toggleMasterAccordion(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.master-accordion-icon');
+            
+            if (content.classList.contains('active')) {
+                // 닫기
+                content.classList.remove('active');
+                header.classList.remove('active');
+                icon.textContent = '+';
+            } else {
+                // 열기
+                content.classList.add('active');
+                header.classList.add('active');
+                icon.textContent = '-';
+            }
+        }
+        
+        // --- [수정됨] 아코디언 토글 (+/- 아이콘 변경 로직 추가) ---
         function toggleAccordion(header) {
             const content = header.nextElementSibling;
             const wasActive = header.classList.contains('active');
             
-            // 모든 아코디언 닫기
+            // 모든 아코디언 닫기 + 아이콘 리셋
             document.querySelectorAll('.accordion-header').forEach(h => {
                 h.classList.remove('active');
                 h.nextElementSibling.classList.remove('active');
+                h.querySelector('.accordion-icon').textContent = '+'; // 리셋
             });
             
             // 클릭한 항목만 열기 (이미 열려있었다면 닫힌 상태 유지)
             if (!wasActive) {
                 header.classList.add('active');
                 content.classList.add('active');
+                header.querySelector('.accordion-icon').textContent = '-'; // 열림 표시
             }
         }
         
@@ -540,15 +613,16 @@
             
             const faqList = document.getElementById('faqList');
             
+            // --- [수정됨] .no-results-icon 제거 ---
             if (filteredData.length === 0) {
                 faqList.innerHTML = `
                     <div class="no-results">
-                        <div class="no-results-icon">🔍</div>
                         <h3>검색 결과가 없습니다</h3>
                         <p>다른 검색어나 카테고리를 시도해보세요.</p>
                     </div>
                 `;
             } else {
+                // --- [수정됨] 아이콘 + 로 변경 ---
                 faqList.innerHTML = filteredData.map(item => `
                     <div class="faq-item" data-no="${item.no}">
                         <div class="faq-question" onclick="toggleAnswer(this)">
@@ -560,7 +634,7 @@
                                 </div>
                                 <span class="question-text">${item.question}</span>
                             </div>
-                            <span class="question-icon">▼</span>
+                            <span class="question-icon">+</span>
                         </div>
                         <div class="faq-answer">
                             <div class="answer-content">${item.answer}</div>
@@ -574,23 +648,25 @@
             document.getElementById('displayCount').textContent = filteredData.length;
         }
         
-        // 답변 토글
+        // --- [수정됨] 답변 토글 (+/- 아이콘 변경 로직 추가) ---
         function toggleAnswer(element) {
             const faqItem = element.parentElement;
             const wasActive = faqItem.classList.contains('active');
             
-            // 모든 항목 닫기
+            // 모든 항목 닫기 + 아이콘 리셋
             document.querySelectorAll('.faq-item').forEach(item => {
                 item.classList.remove('active');
+                item.querySelector('.question-icon').textContent = '+'; // 리셋
             });
             
             // 클릭한 항목만 열기
             if (!wasActive) {
                 faqItem.classList.add('active');
+                faqItem.querySelector('.question-icon').textContent = '-'; // 열림 표시
             }
         }
         
-        // 검색 기능
+        // --- [수정됨] 검색 기능 (아코디언 아이콘 리셋 로직 추가) ---
         function setupEventListeners() {
             const searchInput = document.getElementById('searchInput');
             let debounceTimer;
@@ -606,7 +682,16 @@
                     document.querySelectorAll('.accordion-header').forEach(h => {
                         h.classList.remove('active');
                         h.nextElementSibling.classList.remove('active');
+                        h.querySelector('.accordion-icon').textContent = '+'; // 아이콘 리셋
                     });
+
+                    // 마스터 아코디언도 닫기 (검색 시)
+                    const masterHeader = document.querySelector('.master-accordion-header');
+                    if(masterHeader) {
+                        masterHeader.classList.remove('active');
+                        masterHeader.nextElementSibling.classList.remove('active');
+                        masterHeader.querySelector('.master-accordion-icon').textContent = '+';
+                    }
                     
                     renderFAQs();
                 }, 300);
